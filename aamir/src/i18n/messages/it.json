@@ -1,0 +1,19 @@
+{
+  "nav": { "home": "Home", "collections": "Collezioni", "about": "Chi Siamo", "contact": "Contatti" },
+  "hero": { "cta": "Scopri le collezioni" },
+  "collections": { "title": "Collezioni", "all": "Tutti" },
+  "product": {
+    "requestInfo": "Richiedi info",
+    "unavailable": "Non disponibile",
+    "materials": "Materiali",
+    "backToCollections": "Torna alle collezioni"
+  },
+  "about": { "title": "Chi Siamo" },
+  "contact": {
+    "title": "Contatti",
+    "intro": "Per informazioni sui nostri pezzi, scrivici.",
+    "emailLabel": "Email"
+  },
+  "common": { "instagram": "Instagram" },
+  "notFound": { "title": "Pagina non trovata", "cta": "Torna alla home" }
+}
