@@ -25,7 +25,7 @@ export function LanguageSwitcher() {
           className={
             l === locale
               ? "text-[color:var(--color-primary)] font-semibold"
-              : "text-[color:var(--color-text)]/60 hover:text-[color:var(--color-primary)] transition-colors"
+              : "text-[color:var(--color-text)]/70 hover:text-[color:var(--color-primary)] transition-colors"
           }
         >
           {l.toUpperCase()}

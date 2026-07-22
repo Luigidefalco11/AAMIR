@@ -15,7 +15,7 @@ export function CategoryFilter({
     `text-sm tracking-wide pb-1 border-b-2 transition-colors ${
       isActive
         ? "border-[color:var(--color-primary)] text-[color:var(--color-primary)]"
-        : "border-transparent text-[color:var(--color-text)]/60 hover:text-[color:var(--color-primary)]"
+        : "border-transparent text-[color:var(--color-text)]/70 hover:text-[color:var(--color-primary)]"
     }`;
 
   return (

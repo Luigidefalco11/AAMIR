@@ -24,14 +24,14 @@ export default async function ContactPage({
       <Reveal>
         <div className="space-y-6">
           <div>
-            <span className="block text-xs uppercase tracking-widest text-[color:var(--color-text)]/50 mb-1">{t("emailLabel")}</span>
+            <span className="block text-xs uppercase tracking-widest text-[color:var(--color-text)]/70 mb-1">{t("emailLabel")}</span>
             <a href={`mailto:${email}`} className="text-lg hover:text-[color:var(--color-primary)] transition-colors">{email}</a>
           </div>
           <div>
-            <span className="block text-xs uppercase tracking-widest text-[color:var(--color-text)]/50 mb-1">Instagram</span>
+            <span className="block text-xs uppercase tracking-widest text-[color:var(--color-text)]/70 mb-1">Instagram</span>
             <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="text-lg hover:text-[color:var(--color-primary)] transition-colors">@{ig}</a>
           </div>
-          <p className="pt-6 text-[color:var(--color-text)]/60">Salerno, Italia</p>
+          <p className="pt-6 text-[color:var(--color-text)]/70">Salerno, Italia</p>
         </div>
       </Reveal>
     </section>

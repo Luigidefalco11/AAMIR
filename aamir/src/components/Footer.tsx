@@ -14,7 +14,7 @@ export async function Footer() {
           <a href={`mailto:${email}`} className="hover:text-[color:var(--color-primary)] transition-colors">{email}</a>
           <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="hover:text-[color:var(--color-primary)] transition-colors">@{ig}</a>
         </div>
-        <span className="text-[color:var(--color-text)]/50">Salerno, Italia</span>
+        <span className="text-[color:var(--color-text)]/70">Salerno, Italia</span>
       </div>
     </footer>
   );

@@ -23,7 +23,7 @@ export function ProductCard({
         </div>
       </div>
       <h3 className="mt-4 font-serif text-xl">{title}</h3>
-      {materials && <p className="text-sm text-[color:var(--color-text)]/60">{materials}</p>}
+      {materials && <p className="text-sm text-[color:var(--color-text)]/70">{materials}</p>}
     </Link>
   );
 }

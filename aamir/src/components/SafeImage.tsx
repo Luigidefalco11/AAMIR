@@ -18,7 +18,7 @@ export function SafeImage({
   if (!image?.asset) {
     return (
       <div
-        className={`flex items-center justify-center bg-[color:var(--color-surface)] border border-[color:var(--color-border)] ${className ?? ""}`}
+        className={`absolute inset-0 h-full w-full flex items-center justify-center bg-[color:var(--color-surface)] border border-[color:var(--color-border)] ${className ?? ""}`}
         aria-label={alt}
         role="img"
       >

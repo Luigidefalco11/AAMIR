@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { ProductGallery } from "@/components/ProductGallery";
 import { RequestInfoButton } from "@/components/RequestInfoButton";
-import { getProduct, getAllProducts, getSiteSettings } from "@/sanity/queries";
+import { getProduct, getSiteSettings } from "@/sanity/queries";
 import { localize, type Locale } from "@/sanity/localize";
 import { instagramUrl } from "@/lib/contact";
 
@@ -13,17 +13,6 @@ import { instagramUrl } from "@/lib/contact";
 // This also avoids a static/dynamic collision with getLocale() in the root
 // layout when a requested slug isn't in generateStaticParams.
 export const dynamic = "force-dynamic";
-
-export async function generateStaticParams() {
-  const products = await getAllProducts();
-  return products.flatMap((p) =>
-    ["it", "en"].map((locale) => ({
-      locale,
-      categoria: p.categorySlug,
-      slug: p.slug,
-    })),
-  );
-}
 
 export async function generateMetadata({
   params,
@@ -63,14 +52,14 @@ export default async function ProductPage({
       <ProductGallery images={product.images ?? []} title={title} />
 
       <div className="md:pt-8">
-        <Link href={`/${locale}/collezioni`} className="text-sm text-[color:var(--color-text)]/60 hover:text-[color:var(--color-primary)] transition-colors">
+        <Link href={`/${locale}/collezioni`} className="text-sm text-[color:var(--color-text)]/70 hover:text-[color:var(--color-primary)] transition-colors">
           ← {t("backToCollections")}
         </Link>
         <h1 className="font-serif text-4xl mt-4">{title}</h1>
 
         {materials && (
           <p className="mt-6">
-            <span className="block text-xs uppercase tracking-widest text-[color:var(--color-text)]/50">{t("materials")}</span>
+            <span className="block text-xs uppercase tracking-widest text-[color:var(--color-text)]/70">{t("materials")}</span>
             <span className="text-lg">{materials}</span>
           </p>
         )}
@@ -83,7 +72,7 @@ export default async function ProductPage({
           {product.available ? (
             <RequestInfoButton email={email} productName={title} locale={l} label={t("requestInfo")} />
           ) : (
-            <span className="text-sm text-[color:var(--color-text)]/50">{t("unavailable")}</span>
+            <span className="text-sm text-[color:var(--color-text)]/70">{t("unavailable")}</span>
           )}
           <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-[color:var(--color-primary)] transition-colors">
             @{ig}
