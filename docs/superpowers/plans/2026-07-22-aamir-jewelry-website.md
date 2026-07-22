@@ -341,22 +341,28 @@ npm install sanity @sanity/vision next-sanity @sanity/image-url styled-component
 
 Create `aamir/src/sanity/env.ts`:
 ```ts
+// Resilient config: when the Sanity project isn't wired up yet (no
+// .env.local — e.g. before the owner runs `sanity init`), fall back to
+// placeholder values so imports never crash the build. Fetchers degrade to
+// empty/null (see queries.ts), and the UI shows placeholder content.
 export const apiVersion =
   process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2024-10-01";
 
-export const dataset = assertValue(
-  process.env.NEXT_PUBLIC_SANITY_DATASET,
-  "Missing env var: NEXT_PUBLIC_SANITY_DATASET",
-);
+export const dataset =
+  process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
 
-export const projectId = assertValue(
-  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-  "Missing env var: NEXT_PUBLIC_SANITY_PROJECT_ID",
-);
+export const projectId =
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "placeholder";
 
-function assertValue<T>(v: T | undefined, errorMessage: string): T {
-  if (v === undefined) throw new Error(errorMessage);
-  return v;
+// True only when a real project id is configured.
+export const isConfigured =
+  Boolean(process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) &&
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID !== "placeholder";
+
+if (!isConfigured && typeof window === "undefined") {
+  console.warn(
+    "[sanity] NEXT_PUBLIC_SANITY_PROJECT_ID not set — using placeholder; content will be empty until the CMS is configured.",
+  );
 }
 ```
 
@@ -903,6 +909,7 @@ describe("GROQ queries", () => {
 Create `aamir/src/sanity/queries.ts`:
 ```ts
 import { client } from "./client";
+import { isConfigured } from "./env";
 import type { Product, Category, SiteSettings } from "./types";
 
 export const PRODUCT_PROJECTION = `{
@@ -935,23 +942,39 @@ export const categoriesQuery = `*[_type == "category"] | order(order asc) ${CATE
 
 const REVALIDATE = { next: { revalidate: 60 } } as const;
 
+// Safe fetch: when the CMS isn't configured yet, or a request fails (network,
+// bad project), degrade to the fallback instead of crashing the build/page.
+async function safeFetch<T>(
+  query: string,
+  params: Record<string, unknown>,
+  fallback: T,
+): Promise<T> {
+  if (!isConfigured) return fallback;
+  try {
+    return await client.fetch<T>(query, params, REVALIDATE);
+  } catch (err) {
+    console.error("[sanity] fetch failed, using fallback:", err);
+    return fallback;
+  }
+}
+
 export function getSiteSettings(): Promise<SiteSettings | null> {
-  return client.fetch(siteSettingsQuery, {}, REVALIDATE);
+  return safeFetch(siteSettingsQuery, {}, null);
 }
 export function getFeaturedProducts(): Promise<Product[]> {
-  return client.fetch(featuredProductsQuery, {}, REVALIDATE);
+  return safeFetch(featuredProductsQuery, {}, []);
 }
 export function getAllProducts(): Promise<Product[]> {
-  return client.fetch(allProductsQuery, {}, REVALIDATE);
+  return safeFetch(allProductsQuery, {}, []);
 }
 export function getProductsByCategory(slug: string): Promise<Product[]> {
-  return client.fetch(productsByCategoryQuery, { slug }, REVALIDATE);
+  return safeFetch(productsByCategoryQuery, { slug }, []);
 }
 export function getProduct(slug: string): Promise<Product | null> {
-  return client.fetch(productBySlugQuery, { slug }, REVALIDATE);
+  return safeFetch(productBySlugQuery, { slug }, null);
 }
 export function getCategories(): Promise<Category[]> {
-  return client.fetch(categoriesQuery, {}, REVALIDATE);
+  return safeFetch(categoriesQuery, {}, []);
 }
 ```
 
