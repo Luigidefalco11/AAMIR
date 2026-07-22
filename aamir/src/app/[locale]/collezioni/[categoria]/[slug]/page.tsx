@@ -8,6 +8,12 @@ import { getProduct, getAllProducts, getSiteSettings } from "@/sanity/queries";
 import { localize, type Locale } from "@/sanity/localize";
 import { instagramUrl } from "@/lib/contact";
 
+// Product pages depend on live CMS data that changes; render on demand
+// (with data-layer revalidation) rather than as build-time static pages.
+// This also avoids a static/dynamic collision with getLocale() in the root
+// layout when a requested slug isn't in generateStaticParams.
+export const dynamic = "force-dynamic";
+
 export async function generateStaticParams() {
   const products = await getAllProducts();
   return products.flatMap((p) =>
