@@ -4,6 +4,7 @@ import { Reveal } from "@/components/Reveal";
 import { Tilt3D } from "@/components/Tilt3D";
 import { ProductCard } from "@/components/ProductCard";
 import { SafeImage } from "@/components/SafeImage";
+import { CraftSection } from "@/components/CraftSection";
 import { getFeaturedProducts, getSiteSettings } from "@/sanity/queries";
 import { localize, type Locale } from "@/sanity/localize";
 
@@ -17,6 +18,11 @@ const ABOUT_FALLBACK = {
   en: "Aamir has worked in goldsmithing for over ten years, here in Italy. He selects and works precious stones with the precision of a true master of the craft, shaping them by hand into necklaces, rings, bracelets and earrings. No mass production: only a constant pursuit of balance, form and quality, steps away from the sea of Salerno.",
 };
 
+const CRAFT_FALLBACK = {
+  it: "Ogni pezzo nasce da un gesto manuale: la lima, il filo, la pietra scelta a una a una. Nessuna macchina sostituisce dieci anni di pazienza e mestiere.",
+  en: "Every piece begins with a hand gesture: the file, the wire, each stone chosen one by one. No machine replaces ten years of patience and craft.",
+};
+
 export default async function HomePage({
   params,
 }: {
@@ -27,6 +33,7 @@ export default async function HomePage({
   const l = locale as Locale;
   const t = await getTranslations({ locale, namespace: "hero" });
   const tc = await getTranslations({ locale, namespace: "collections" });
+  const tCraft = await getTranslations({ locale, namespace: "craft" });
   const [featured, settings] = await Promise.all([
     getFeaturedProducts(),
     getSiteSettings(),
@@ -35,6 +42,8 @@ export default async function HomePage({
   const heroTitle = localize(settings?.heroTitle, l) || HERO_FALLBACK[l].title;
   const heroSubtitle = localize(settings?.heroSubtitle, l) || HERO_FALLBACK[l].subtitle;
   const about = localize(settings?.aboutText, l) || ABOUT_FALLBACK[l];
+  const craftTitle = tCraft("title");
+  const craftText = CRAFT_FALLBACK[l];
 
   return (
     <>
@@ -80,6 +89,8 @@ export default async function HomePage({
           </div>
         </section>
       )}
+
+      <CraftSection title={craftTitle} text={craftText} />
 
       <section className="mx-auto max-w-3xl px-6 mt-28 text-center">
         <Reveal>
