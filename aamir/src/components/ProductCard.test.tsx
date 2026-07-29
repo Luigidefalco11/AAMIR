@@ -25,4 +25,9 @@ describe("ProductCard", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/en/collezioni/collane/collana-onda");
   });
+
+  it("still renders correctly when given a grid index", () => {
+    render(<ProductCard product={product} locale="en" index={1} />);
+    expect(screen.getByText("Onda Necklace")).toBeInTheDocument();
+  });
 });
