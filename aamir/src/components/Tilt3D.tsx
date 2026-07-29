@@ -70,7 +70,7 @@ export function Tilt3D({
   }, [amount]);
 
   return (
-    <div ref={stageRef} className={className} style={{ perspective: 1000, position: "relative" }}>
+    <div ref={stageRef} className={className} style={{ perspective: 1000 }}>
       <div
         ref={innerRef}
         style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d", willChange: "transform" }}
