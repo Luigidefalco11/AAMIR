@@ -1,9 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { Tilt3D } from "./Tilt3D";
 import { Reveal } from "./Reveal";
 import { prefersReducedMotion } from "@/lib/motion";
+
+const QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribe(callback: () => void) {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return () => {};
+  }
+  const mql = window.matchMedia(QUERY);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  return !prefersReducedMotion();
+}
+
+// Server (and pre-hydration) render as if reduced motion is preferred, so the
+// video never autoplays before we can actually check the client's setting.
+function getServerSnapshot() {
+  return false;
+}
 
 export function CraftSection({
   title,
@@ -12,11 +33,7 @@ export function CraftSection({
   title: string;
   text: string;
 }) {
-  const [motionOk, setMotionOk] = useState(false);
-
-  useEffect(() => {
-    setMotionOk(!prefersReducedMotion());
-  }, []);
+  const motionOk = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
     <section className="mx-auto max-w-7xl px-6 mt-28 grid md:grid-cols-2 gap-10 items-center">
