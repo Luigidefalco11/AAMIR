@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Tilt3D } from "./Tilt3D";
 import { Reveal } from "./Reveal";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -12,13 +12,10 @@ export function CraftSection({
   title: string;
   text: string;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [motionOk, setMotionOk] = useState(false);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !prefersReducedMotion()) return;
-    video.pause();
-    video.removeAttribute("loop");
+    setMotionOk(!prefersReducedMotion());
   }, []);
 
   return (
@@ -29,9 +26,8 @@ export function CraftSection({
           amount={8}
         >
           <video
-            ref={videoRef}
-            autoPlay
-            loop
+            autoPlay={motionOk}
+            loop={motionOk}
             muted
             playsInline
             poster="/videos/lavorazione-poster.jpg"
