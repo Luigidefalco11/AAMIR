@@ -35,9 +35,9 @@ export default async function CategoryPage({
       <h1 className="font-serif text-4xl mb-10">{tcat(categoria)}</h1>
       <CategoryFilter locale={locale} active={categoria} labels={labels} />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-        {products.map((p) => (
+        {products.map((p, i) => (
           <Reveal key={p._id}>
-            <ProductCard product={p} locale={l} />
+            <ProductCard product={p} locale={l} index={i} />
           </Reveal>
         ))}
       </div>
