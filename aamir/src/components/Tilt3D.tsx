@@ -65,6 +65,7 @@ export function Tilt3D({
 
     return () => {
       stage.removeEventListener("mousemove", handleMove);
+      gsap.killTweensOf(inner);
       ctx.revert();
     };
   }, [amount]);
