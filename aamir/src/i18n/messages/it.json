@@ -2,6 +2,7 @@
   "nav": { "home": "Home", "collections": "Collezioni", "about": "Chi Siamo", "contact": "Contatti" },
   "hero": { "cta": "Scopri le collezioni" },
   "collections": { "title": "Collezioni", "all": "Tutti" },
+  "craft": { "title": "La Lavorazione" },
   "categories": { "collane": "Collane", "bracciali": "Bracciali", "orecchini": "Orecchini", "anelli": "Anelli" },
   "product": {
     "requestInfo": "Richiedi info",

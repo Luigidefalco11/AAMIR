@@ -2,6 +2,7 @@
   "nav": { "home": "Home", "collections": "Collections", "about": "About", "contact": "Contact" },
   "hero": { "cta": "Explore the collections" },
   "collections": { "title": "Collections", "all": "All" },
+  "craft": { "title": "The Craft" },
   "categories": { "collane": "Necklaces", "bracciali": "Bracelets", "orecchini": "Earrings", "anelli": "Rings" },
   "product": {
     "requestInfo": "Request info",
