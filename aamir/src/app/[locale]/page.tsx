@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Reveal } from "@/components/Reveal";
+import { Tilt3D } from "@/components/Tilt3D";
 import { ProductCard } from "@/components/ProductCard";
 import { SafeImage } from "@/components/SafeImage";
 import { getFeaturedProducts, getSiteSettings } from "@/sanity/queries";
@@ -38,19 +39,29 @@ export default async function HomePage({
   return (
     <>
       <section className="mx-auto max-w-7xl px-6 pt-16 md:pt-24 grid md:grid-cols-2 gap-10 items-center">
-        <Reveal>
-          <h1 className="font-serif text-4xl md:text-6xl leading-tight">{heroTitle}</h1>
-          <p className="mt-6 text-lg text-[color:var(--color-text)]/70 max-w-md">{heroSubtitle}</p>
-          <Link
-            href={`/${locale}/collezioni`}
-            className="inline-block mt-8 px-6 py-3 bg-[color:var(--color-primary)] text-white text-sm tracking-wide hover:bg-[color:var(--color-primary-hover)] transition-colors"
-          >
-            {t("cta")}
-          </Link>
-        </Reveal>
-        <Reveal>
-          <div className="relative aspect-[4/5] w-full">
-            <SafeImage image={featured[0]?.images?.[0]} alt={heroTitle} sizes="(max-width: 768px) 100vw, 50vw" priority />
+        <div>
+          <Reveal delay={0} y={48}>
+            <h1 className="font-serif text-4xl md:text-6xl leading-tight">{heroTitle}</h1>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <p className="mt-6 text-lg text-[color:var(--color-text)]/70 max-w-md">{heroSubtitle}</p>
+          </Reveal>
+          <Reveal delay={0.3}>
+            <Link
+              href={`/${locale}/collezioni`}
+              className="inline-block mt-8 px-7 py-3 bg-[color:var(--color-primary)] text-white text-sm tracking-wide hover:bg-[color:var(--color-primary-hover)] hover:-translate-y-0.5 transition-all duration-300"
+            >
+              {t("cta")}
+            </Link>
+          </Reveal>
+        </div>
+        <Reveal delay={0.2} y={56}>
+          <div className="relative aspect-[4/5] w-full overflow-hidden">
+            <Tilt3D className="absolute inset-0" amount={14}>
+              <div className="absolute inset-0 scale-[1.12]">
+                <SafeImage image={featured[0]?.images?.[0]} alt={heroTitle} sizes="(max-width: 768px) 100vw, 50vw" priority />
+              </div>
+            </Tilt3D>
           </div>
         </Reveal>
       </section>
