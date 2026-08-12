@@ -1,23 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { buildRequestInfoMailto, instagramUrl } from "./contact";
+import { buildRequestInfoMessage, instagramUrl, instagramDmUrl } from "./contact";
 
-describe("buildRequestInfoMailto", () => {
-  it("builds an encoded mailto with the Italian subject", () => {
-    const url = buildRequestInfoMailto({
-      email: "info@aamirjewelry.it",
-      productName: "Collana Onda",
-      locale: "it",
-    });
-    expect(url.startsWith("mailto:info@aamirjewelry.it?")).toBe(true);
-    expect(url).toContain("subject=Richiesta%20info%3A%20Collana%20Onda");
+describe("buildRequestInfoMessage", () => {
+  it("builds the Italian message for a product", () => {
+    const message = buildRequestInfoMessage({ productName: "Collana Onda", locale: "it" });
+    expect(message).toBe("Salve, sono interessato/a a questo pezzo: Collana Onda.");
   });
-  it("uses the English subject for en locale", () => {
-    const url = buildRequestInfoMailto({
-      email: "info@aamirjewelry.it",
-      productName: "Onda Necklace",
-      locale: "en",
-    });
-    expect(url).toContain("subject=Product%20enquiry%3A%20Onda%20Necklace");
+  it("builds the English message for a product", () => {
+    const message = buildRequestInfoMessage({ productName: "Onda Necklace", locale: "en" });
+    expect(message).toBe("Hello, I'm interested in this piece: Onda Necklace.");
   });
 });
 
@@ -27,5 +18,14 @@ describe("instagramUrl", () => {
   });
   it("works without a leading @", () => {
     expect(instagramUrl("aamirjewelry")).toBe("https://instagram.com/aamirjewelry");
+  });
+});
+
+describe("instagramDmUrl", () => {
+  it("strips a leading @ and builds the direct-message deep link", () => {
+    expect(instagramDmUrl("@aamir.jewelry")).toBe("https://ig.me/m/aamir.jewelry");
+  });
+  it("works without a leading @", () => {
+    expect(instagramDmUrl("aamir.jewelry")).toBe("https://ig.me/m/aamir.jewelry");
   });
 });

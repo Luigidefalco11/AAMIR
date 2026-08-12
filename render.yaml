@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: aamir
+    runtime: node
+    plan: free
+    rootDir: aamir
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_SANITY_PROJECT_ID
+        value: 6e0n8qy1
+      - key: NEXT_PUBLIC_SANITY_DATASET
+        value: production
+      - key: NEXT_PUBLIC_SANITY_API_VERSION
+        value: "2024-10-01"

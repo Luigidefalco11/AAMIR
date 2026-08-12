@@ -6,6 +6,7 @@
   "categories": { "collane": "Necklaces", "bracciali": "Bracelets", "orecchini": "Earrings", "anelli": "Rings" },
   "product": {
     "requestInfo": "Request info",
+    "messageCopied": "Message copied! Paste it into the Instagram chat that just opened.",
     "unavailable": "Unavailable",
     "materials": "Materials",
     "backToCollections": "Back to collections"

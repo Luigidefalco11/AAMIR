@@ -13,7 +13,7 @@ export default async function ContactPage({
   const t = await getTranslations({ locale, namespace: "contact" });
   const settings = await getSiteSettings();
   const email = settings?.email ?? "info@aamirjewelry.it";
-  const ig = settings?.instagram ?? "aamirjewelry";
+  const ig = settings?.instagram ?? "aamir.jewelry";
 
   return (
     <section className="mx-auto max-w-2xl px-6 pt-16 text-center">

@@ -44,8 +44,7 @@ export default async function ProductPage({
   const title = localize(product.title, l);
   const materials = localize(product.materials, l);
   const description = localize(product.description, l);
-  const email = settings?.email ?? "info@aamirjewelry.it";
-  const ig = settings?.instagram ?? "aamirjewelry";
+  const ig = settings?.instagram ?? "aamir.jewelry";
 
   return (
     <section className="mx-auto max-w-7xl px-6 pt-12 grid md:grid-cols-2 gap-12">
@@ -70,7 +69,13 @@ export default async function ProductPage({
 
         <div className="mt-10 flex items-center gap-6">
           {product.available ? (
-            <RequestInfoButton email={email} productName={title} locale={l} label={t("requestInfo")} />
+            <RequestInfoButton
+              instagramHandle={ig}
+              productName={title}
+              locale={l}
+              label={t("requestInfo")}
+              copiedLabel={t("messageCopied")}
+            />
           ) : (
             <span className="text-sm text-[color:var(--color-text)]/70">{t("unavailable")}</span>
           )}

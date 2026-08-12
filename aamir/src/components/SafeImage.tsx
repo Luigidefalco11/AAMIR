@@ -15,6 +15,17 @@ export function SafeImage({
   priority?: boolean;
   className?: string;
 }) {
+  // Demo catalog: a direct image URL (e.g. /demo/*.svg) with no Sanity asset.
+  if (image?.url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={image.url}
+        alt={alt}
+        className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
+      />
+    );
+  }
   if (!image?.asset) {
     return (
       <div

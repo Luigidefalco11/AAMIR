@@ -1,6 +1,9 @@
 export type LocaleField = { it?: string; en?: string };
 
-export type SanityImage = { asset: unknown; alt: string };
+// `asset` is present for real CMS images (rendered via the Sanity image
+// builder). `url` is an optional direct source used by the demo catalog until
+// real photos are uploaded.
+export type SanityImage = { asset?: unknown; alt: string; url?: string };
 
 export type Product = {
   _id: string;

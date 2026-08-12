@@ -9,8 +9,8 @@ import { getFeaturedProducts, getSiteSettings } from "@/sanity/queries";
 import { localize, type Locale } from "@/sanity/localize";
 
 const HERO_FALLBACK = {
-  it: { title: "Gioielli lavorati a mano a Salerno", subtitle: "Pietre preziose, forma e precisione. Ogni pezzo nasce dalle mani di Aamir." },
-  en: { title: "Handcrafted jewelry in Salerno", subtitle: "Precious stones, form and precision. Every piece is made by Aamir's hands." },
+  it: { title: "Gioielli lavorati a mano", subtitle: "Pietre preziose, forma e precisione. Ogni pezzo nasce dalle mani di Aamir." },
+  en: { title: "Handcrafted jewelry", subtitle: "Precious stones, form and precision. Every piece is made by Aamir's hands." },
 };
 
 const ABOUT_FALLBACK = {

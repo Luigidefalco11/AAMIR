@@ -4,7 +4,7 @@ import { instagramUrl } from "@/lib/contact";
 export async function Footer() {
   const settings = await getSiteSettings();
   const email = settings?.email ?? "info@aamirjewelry.it";
-  const ig = settings?.instagram ?? "aamirjewelry";
+  const ig = settings?.instagram ?? "aamir.jewelry";
 
   return (
     <footer className="mt-24 border-t border-[color:var(--color-border)]">

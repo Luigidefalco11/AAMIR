@@ -17,21 +17,27 @@
   color-scheme: light;
 }
 
-body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-}
+/* Base element defaults live in @layer base so Tailwind utility classes
+   (text-white, text-[color:...], etc.) always win over them. Unlayered rules
+   would otherwise override utilities and, e.g., force button text to inherit
+   the dark body color instead of white. */
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
 
-h1, h2, h3, h4 {
-  font-family: var(--font-serif);
-  font-weight: 500;
-}
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 /* Respect reduced motion at the CSS layer as a baseline */

@@ -1,14 +1,60 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RequestInfoButton } from "./RequestInfoButton";
 
 describe("RequestInfoButton", () => {
-  it("renders a mailto link with the encoded product name", () => {
+  beforeEach(() => {
+    vi.stubGlobal("open", vi.fn());
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+  });
+
+  it("copies the Italian product message and opens the Instagram DM thread", async () => {
     render(
-      <RequestInfoButton email="info@aamirjewelry.it" productName="Collana Onda" locale="it" label="Richiedi info" />,
+      <RequestInfoButton
+        instagramHandle="aamir.jewelry"
+        productName="Collana Onda"
+        locale="it"
+        label="Richiedi info"
+        copiedLabel="Copiato"
+      />,
     );
-    const link = screen.getByRole("link", { name: "Richiedi info" });
-    expect(link.getAttribute("href")).toContain("mailto:info@aamirjewelry.it");
-    expect(link.getAttribute("href")).toContain("Collana%20Onda");
+    fireEvent.click(screen.getByRole("button", { name: "Richiedi info" }));
+
+    await waitFor(() => {
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "Salve, sono interessato/a a questo pezzo: Collana Onda.",
+      );
+    });
+    expect(window.open).toHaveBeenCalledWith(
+      "https://ig.me/m/aamir.jewelry",
+      "_blank",
+      "noopener,noreferrer",
+    );
+    expect(await screen.findByText("Copiato")).toBeInTheDocument();
+  });
+
+  it("still opens the DM thread when clipboard access fails", async () => {
+    Object.assign(navigator, {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+    });
+    render(
+      <RequestInfoButton
+        instagramHandle="aamir.jewelry"
+        productName="Onda Necklace"
+        locale="en"
+        label="Request info"
+        copiedLabel="Copied"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Request info" }));
+
+    await waitFor(() => {
+      expect(window.open).toHaveBeenCalledWith(
+        "https://ig.me/m/aamir.jewelry",
+        "_blank",
+        "noopener,noreferrer",
+      );
+    });
+    expect(screen.queryByText("Copied")).not.toBeInTheDocument();
   });
 });

@@ -6,6 +6,7 @@
   "categories": { "collane": "Collane", "bracciali": "Bracciali", "orecchini": "Orecchini", "anelli": "Anelli" },
   "product": {
     "requestInfo": "Richiedi info",
+    "messageCopied": "Messaggio copiato! Incollalo nella chat Instagram che si è appena aperta.",
     "unavailable": "Non disponibile",
     "materials": "Materiali",
     "backToCollections": "Torna alle collezioni"

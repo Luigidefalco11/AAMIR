@@ -7,7 +7,7 @@ import { instagramUrl } from "@/lib/contact";
 export async function Header({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "nav" });
   const settings = await getSiteSettings();
-  const ig = settings?.instagram ?? "aamirjewelry";
+  const ig = settings?.instagram ?? "aamir.jewelry";
   const base = `/${locale}`;
 
   return (
