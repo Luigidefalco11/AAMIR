@@ -1,6 +1,9 @@
-import Image from "next/image";
-import { urlFor, sanityImageLoader } from "@/sanity/client";
+import { urlFor } from "@/sanity/client";
 import type { SanityImage } from "@/sanity/types";
+
+// Widths for the responsive srcset — Sanity's CDN resizes/caches each variant,
+// so no image processing happens on our own (slower, resource-constrained) host.
+const RESPONSIVE_WIDTHS = [400, 640, 768, 1024, 1280, 1600, 1920];
 
 export function SafeImage({
   image,
@@ -37,16 +40,19 @@ export function SafeImage({
       </div>
     );
   }
-  const src = urlFor(image).url();
+  const srcSet = RESPONSIVE_WIDTHS.map(
+    (w) => `${urlFor(image).width(w).auto("format").url()} ${w}w`,
+  ).join(", ");
   return (
-    <Image
-      src={src}
-      loader={sanityImageLoader}
-      alt={alt}
-      fill
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={urlFor(image).width(1200).auto("format").url()}
+      srcSet={srcSet}
       sizes={sizes ?? "(max-width: 768px) 100vw, 50vw"}
-      priority={priority}
-      className={`object-cover ${className ?? ""}`}
+      alt={alt}
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
+      className={`absolute inset-0 h-full w-full object-cover ${className ?? ""}`}
     />
   );
 }

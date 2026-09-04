@@ -4,8 +4,10 @@ import { ProductCard } from "./ProductCard";
 import type { Product } from "@/sanity/types";
 
 vi.mock("@/sanity/client", () => ({
-  urlFor: () => ({ url: () => "https://cdn.sanity.io/x.jpg" }),
-  sanityImageLoader: () => "https://cdn.sanity.io/x.jpg",
+  urlFor: () => ({
+    url: () => "https://cdn.sanity.io/x.jpg",
+    width: () => ({ auto: () => ({ url: () => "https://cdn.sanity.io/x.jpg" }) }),
+  }),
 }));
 
 const product: Product = {
