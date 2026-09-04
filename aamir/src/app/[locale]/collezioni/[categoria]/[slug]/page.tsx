@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { ProductGallery } from "@/components/ProductGallery";
-import { RequestInfoButton } from "@/components/RequestInfoButton";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { getProduct, getSiteSettings } from "@/sanity/queries";
 import { localize, type Locale } from "@/sanity/localize";
 import { instagramUrl } from "@/lib/contact";
+import { urlFor } from "@/sanity/client";
 
 // Product pages depend on live CMS data that changes; render on demand
 // (with data-layer revalidation) rather than as build-time static pages.
@@ -45,6 +46,7 @@ export default async function ProductPage({
   const materials = localize(product.materials, l);
   const description = localize(product.description, l);
   const ig = settings?.instagram ?? "aamir.jewelry";
+  const purchasable = product.available && typeof product.price === "number";
 
   return (
     <section className="mx-auto max-w-7xl px-6 pt-12 grid md:grid-cols-2 gap-12">
@@ -55,6 +57,10 @@ export default async function ProductPage({
           ← {t("backToCollections")}
         </Link>
         <h1 className="font-serif text-4xl mt-4">{title}</h1>
+
+        {typeof product.price === "number" && (
+          <p className="mt-4 text-2xl font-serif">€{product.price}</p>
+        )}
 
         {materials && (
           <p className="mt-6">
@@ -68,16 +74,25 @@ export default async function ProductPage({
         )}
 
         <div className="mt-10 flex items-center gap-6">
-          {product.available ? (
-            <RequestInfoButton
-              instagramHandle={ig}
-              productName={title}
-              locale={l}
-              label={t("requestInfo")}
-              copiedLabel={t("messageCopied")}
+          {purchasable ? (
+            <AddToCartButton
+              product={{
+                productId: product._id,
+                slug: product.slug,
+                categorySlug: product.categorySlug,
+                title: product.title,
+                price: product.price as number,
+                imageUrl: product.images?.[0]
+                  ? urlFor(product.images[0]).width(200).auto("format").url()
+                  : undefined,
+              }}
+              addLabel={t("addToCart")}
+              inCartLabel={t("inCart")}
             />
           ) : (
-            <span className="text-sm text-[color:var(--color-text)]/70">{t("unavailable")}</span>
+            <span className="text-sm text-[color:var(--color-text)]/70">
+              {product.available ? t("priceOnRequest") : t("sold")}
+            </span>
           )}
           <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-[color:var(--color-primary)] transition-colors">
             @{ig}
