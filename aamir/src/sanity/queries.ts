@@ -27,7 +27,8 @@ const CATEGORY_PROJECTION = `{
 }`;
 
 export const siteSettingsQuery = `*[_type == "siteSettings"][0]{
-  heroTitle, heroSubtitle, aboutText, email, instagram, metaDescription
+  heroTitle, heroSubtitle, aboutText, email, instagram, metaDescription,
+  legalBusinessName, vatNumber, businessAddress
 }`;
 
 export const featuredProductsQuery = `*[_type == "product" && featured == true] | order(order asc) ${PRODUCT_PROJECTION}`;

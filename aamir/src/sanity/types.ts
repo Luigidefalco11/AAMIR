@@ -30,4 +30,7 @@ export type SiteSettings = {
   email: string;
   instagram: string;
   metaDescription: LocaleField;
+  legalBusinessName?: string;
+  vatNumber?: string;
+  businessAddress?: string;
 };

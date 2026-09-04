@@ -11,5 +11,20 @@ export const siteSettings = defineType({
     defineField({ name: "email", title: "Email di contatto", type: "string" }),
     defineField({ name: "instagram", title: "Handle Instagram (senza @)", type: "string" }),
     defineField({ name: "metaDescription", title: "Meta description (SEO)", type: "localeText" }),
+    defineField({
+      name: "legalBusinessName",
+      title: "Ragione sociale (per pagina Termini)",
+      type: "string",
+    }),
+    defineField({
+      name: "vatNumber",
+      title: "Partita IVA (per pagina Termini)",
+      type: "string",
+    }),
+    defineField({
+      name: "businessAddress",
+      title: "Sede legale/operativa (per pagina Termini)",
+      type: "string",
+    }),
   ],
 });
