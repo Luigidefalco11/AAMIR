@@ -11,13 +11,17 @@ describe("sanity schema", () => {
         "category",
         "product",
         "siteSettings",
+        "order",
       ]),
     );
   });
 
-  it("product has no price field (price-on-request policy)", () => {
+  it("product has an optional price field in EUR", () => {
     const product = schemaTypes.find((t) => t.name === "product");
-    const fieldNames = (product?.fields ?? []).map((f: { name: string }) => f.name);
-    expect(fieldNames).not.toContain("price");
+    const priceField = (product?.fields ?? []).find(
+      (f: { name: string }) => f.name === "price",
+    );
+    expect(priceField).toBeDefined();
+    expect(priceField?.type).toBe("number");
   });
 });

@@ -41,6 +41,13 @@ export const product = defineType({
     }),
     defineField({ name: "materials", title: "Materiali / pietre", type: "localeString" }),
     defineField({ name: "description", title: "Descrizione", type: "localeText" }),
+    defineField({
+      name: "price",
+      title: "Prezzo (EUR)",
+      description: 'Lascia vuoto per mostrare "Prezzo su richiesta" invece del carrello.',
+      type: "number",
+      validation: (r) => r.min(0),
+    }),
     defineField({ name: "featured", title: "In evidenza", type: "boolean", initialValue: false }),
     defineField({ name: "available", title: "Disponibile", type: "boolean", initialValue: true }),
     defineField({ name: "order", title: "Ordine", type: "number", initialValue: 0 }),

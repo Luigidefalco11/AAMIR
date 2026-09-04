@@ -6,9 +6,9 @@ import {
 } from "./queries";
 
 describe("GROQ queries", () => {
-  it("projects category slug and never selects a price", () => {
+  it("projects category slug and price", () => {
     expect(PRODUCT_PROJECTION).toContain('"categorySlug": category->slug.current');
-    expect(PRODUCT_PROJECTION).not.toMatch(/price/i);
+    expect(PRODUCT_PROJECTION).toMatch(/\bprice\b/);
   });
   it("product-by-slug query filters on slug param", () => {
     expect(productBySlugQuery).toContain("slug.current == $slug");
