@@ -28,4 +28,14 @@ describe("ProductCard", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/en/collezioni/collane/collana-onda");
   });
+
+  it("shows the price when the product has one", () => {
+    render(<ProductCard product={{ ...product, price: 450 }} locale="en" />);
+    expect(screen.getByText("€450")).toBeInTheDocument();
+  });
+
+  it("shows nothing extra when the product has no price", () => {
+    render(<ProductCard product={product} locale="en" />);
+    expect(screen.queryByText(/€/)).not.toBeInTheDocument();
+  });
 });

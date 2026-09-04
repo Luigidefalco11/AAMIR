@@ -24,6 +24,9 @@ export function ProductCard({
       </div>
       <h3 className="mt-4 font-serif text-xl">{title}</h3>
       {materials && <p className="text-sm text-[color:var(--color-text)]/70">{materials}</p>}
+      {typeof product.price === "number" && (
+        <p className="text-sm text-[color:var(--color-gold)]">€{product.price}</p>
+      )}
     </Link>
   );
 }
