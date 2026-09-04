@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #faf9f6;
+  /* Palette drawn from the AAMIR logo: gold lettering + ruby gemstone on
+     warm white marble. */
+  --color-bg: #faf6ef;
   --color-surface: #ffffff;
-  --color-text: #14212b;
-  --color-primary: #1b4b66;
-  --color-primary-hover: #4a7c95;
-  --color-gold: #b08d57;
-  --color-border: #e4e9ec;
+  --color-text: #2a1e17;
+  --color-primary: #7c1430;
+  --color-primary-hover: #9a1b3c;
+  --color-gold: #ae8a3e;
+  --color-border: #e6dcc9;
 
   --font-serif: var(--font-serif), Georgia, serif;
   --font-sans: var(--font-sans), system-ui, sans-serif;

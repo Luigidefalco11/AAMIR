@@ -10,7 +10,7 @@ export async function Footer() {
   return (
     <footer className="mt-24 border-t border-[color:var(--color-border)]">
       <div className="mx-auto max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-        <Image src="/logo.png" alt="AAMIR" width={1200} height={892} className="h-9 w-auto rounded shadow-sm" />
+        <Image src="/logo.png" alt="AAMIR" width={1200} height={892} className="h-9 w-auto" />
         <div className="flex gap-6">
           <a href={`mailto:${email}`} className="hover:text-[color:var(--color-primary)] transition-colors">{email}</a>
           <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="hover:text-[color:var(--color-primary)] transition-colors">@{ig}</a>

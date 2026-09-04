@@ -27,7 +27,7 @@ export async function Header({ locale }: { locale: string }) {
             width={1200}
             height={892}
             priority
-            className="h-12 w-auto rounded shadow-sm"
+            className="h-12 w-auto"
           />
         </Link>
         <div className="flex items-center gap-4">
