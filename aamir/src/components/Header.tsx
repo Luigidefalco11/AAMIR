@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { getSiteSettings } from "@/sanity/queries";
@@ -20,15 +19,8 @@ export async function Header({ locale }: { locale: string }) {
           <Link href={`${base}/chi-siamo`} className="hover:text-[color:var(--color-primary)] transition-colors">{t("about")}</Link>
           <Link href={`${base}/contatti`} className="hover:text-[color:var(--color-primary)] transition-colors">{t("contact")}</Link>
         </nav>
-        <Link href={base} className="shrink-0">
-          <Image
-            src="/logo.png"
-            alt="AAMIR"
-            width={1200}
-            height={892}
-            priority
-            className="h-12 w-auto"
-          />
+        <Link href={base} className="font-serif text-2xl tracking-[0.3em] font-semibold">
+          AAMIR
         </Link>
         <div className="flex items-center gap-4">
           <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-[color:var(--color-primary)] transition-colors">Instagram</a>
