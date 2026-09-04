@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CartProvider, useCart } from "./CartProvider";
 import type { CartItem } from "@/lib/cart";
@@ -74,5 +74,30 @@ describe("CartProvider", () => {
       </CartProvider>,
     );
     expect(await screen.findByTestId("count")).toHaveTextContent("1");
+  });
+
+  it("keeps a mutation in memory for this session even when its localStorage write fails", () => {
+    render(
+      <CartProvider>
+        <TestConsumer />
+      </CartProvider>,
+    );
+
+    // First mutation persists successfully.
+    fireEvent.click(screen.getByText("add"));
+    expect(screen.getByTestId("count")).toHaveTextContent("1");
+
+    // Simulate a persistence failure (e.g. quota exceeded) for the next write.
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+
+    fireEvent.click(screen.getByText("remove"));
+
+    // The removal must still be reflected in memory for this session, not
+    // silently reverted back to the last value that *did* persist.
+    expect(screen.getByTestId("count")).toHaveTextContent("0");
+
+    setItemSpy.mockRestore();
   });
 });
