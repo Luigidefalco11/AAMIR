@@ -1,5 +1,5 @@
 # Local-only tooling and private data — not part of the public site repo.
 .claude/
 .superpowers/
-docs/
+/docs/
 aamir-privato/
