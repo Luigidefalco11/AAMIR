@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { CartIcon } from "./CartIcon";
 import { getSiteSettings } from "@/sanity/queries";
 import { instagramUrl } from "@/lib/contact";
 
@@ -24,6 +25,7 @@ export async function Header({ locale }: { locale: string }) {
         </Link>
         <div className="flex items-center gap-4">
           <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-[color:var(--color-primary)] transition-colors">Instagram</a>
+          <CartIcon locale={locale} label={t("cart")} />
           <LanguageSwitcher />
         </div>
       </div>

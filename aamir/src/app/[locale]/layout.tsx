@@ -4,6 +4,7 @@ import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CartProvider } from "@/components/CartProvider";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -22,9 +23,11 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider>
-      <Header locale={locale} />
-      <main className="min-h-[60vh]">{children}</main>
-      <Footer />
+      <CartProvider>
+        <Header locale={locale} />
+        <main className="min-h-[60vh]">{children}</main>
+        <Footer />
+      </CartProvider>
     </NextIntlClientProvider>
   );
 }
