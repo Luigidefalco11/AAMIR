@@ -1,15 +1,39 @@
 {
-  "nav": { "home": "Home", "collections": "Collections", "about": "About", "contact": "Contact" },
+  "nav": { "home": "Home", "collections": "Collections", "about": "About", "contact": "Contact", "cart": "Cart" },
   "hero": { "cta": "Explore the collections" },
   "collections": { "title": "Collections", "all": "All" },
   "craft": { "title": "The Craft" },
   "categories": { "collane": "Necklaces", "bracciali": "Bracelets", "orecchini": "Earrings", "anelli": "Rings" },
   "product": {
-    "requestInfo": "Request info",
-    "messageCopied": "Message copied! Paste it into the Instagram chat that just opened.",
-    "unavailable": "Unavailable",
+    "addToCart": "Add to cart",
+    "inCart": "In cart",
+    "priceOnRequest": "Price on request",
+    "sold": "Sold",
     "materials": "Materials",
     "backToCollections": "Back to collections"
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "remove": "Remove",
+    "total": "Total",
+    "consent": "I have read and accept the",
+    "terms": "Terms and Conditions",
+    "checkout": "Proceed to payment",
+    "checkoutError": "Something went wrong. Please try again.",
+    "itemRemovedWarning": "Some items are no longer available and were removed from your cart."
+  },
+  "checkout": {
+    "successTitle": "Thank you for your purchase!",
+    "successBody": "You'll receive a confirmation email shortly with your order details.",
+    "backToShop": "Back to collections",
+    "cancelTitle": "Payment cancelled",
+    "cancelBody": "Your cart is still here — try again whenever you're ready.",
+    "backToCart": "Back to cart"
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "toComplete": "[To complete in Sanity Studio → Site Settings]"
   },
   "about": { "title": "About" },
   "contact": {

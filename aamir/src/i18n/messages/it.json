@@ -1,15 +1,39 @@
 {
-  "nav": { "home": "Home", "collections": "Collezioni", "about": "Chi Siamo", "contact": "Contatti" },
+  "nav": { "home": "Home", "collections": "Collezioni", "about": "Chi Siamo", "contact": "Contatti", "cart": "Carrello" },
   "hero": { "cta": "Scopri le collezioni" },
   "collections": { "title": "Collezioni", "all": "Tutti" },
   "craft": { "title": "La Lavorazione" },
   "categories": { "collane": "Collane", "bracciali": "Bracciali", "orecchini": "Orecchini", "anelli": "Anelli" },
   "product": {
-    "requestInfo": "Richiedi info",
-    "messageCopied": "Messaggio copiato! Incollalo nella chat Instagram che si è appena aperta.",
-    "unavailable": "Non disponibile",
+    "addToCart": "Aggiungi al carrello",
+    "inCart": "Nel carrello",
+    "priceOnRequest": "Prezzo su richiesta",
+    "sold": "Venduto",
     "materials": "Materiali",
     "backToCollections": "Torna alle collezioni"
+  },
+  "cart": {
+    "title": "Carrello",
+    "empty": "Il carrello è vuoto.",
+    "remove": "Rimuovi",
+    "total": "Totale",
+    "consent": "Ho letto e accetto i",
+    "terms": "Termini e Condizioni",
+    "checkout": "Vai al pagamento",
+    "checkoutError": "Qualcosa è andato storto. Riprova.",
+    "itemRemovedWarning": "Alcuni articoli non sono più disponibili e sono stati rimossi dal carrello."
+  },
+  "checkout": {
+    "successTitle": "Grazie per il tuo acquisto!",
+    "successBody": "Riceverai a breve un'email di conferma con i dettagli del tuo ordine.",
+    "backToShop": "Torna alle collezioni",
+    "cancelTitle": "Pagamento annullato",
+    "cancelBody": "Il tuo carrello è ancora qui, puoi riprovare quando vuoi.",
+    "backToCart": "Torna al carrello"
+  },
+  "terms": {
+    "title": "Termini e Condizioni",
+    "toComplete": "[Da completare su Sanity Studio → Impostazioni sito]"
   },
   "about": { "title": "Chi Siamo" },
   "contact": {
