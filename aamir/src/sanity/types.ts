@@ -13,6 +13,7 @@ export type Product = {
   images: SanityImage[];
   materials: LocaleField;
   description: LocaleField;
+  price?: number;
   available: boolean;
 };
 

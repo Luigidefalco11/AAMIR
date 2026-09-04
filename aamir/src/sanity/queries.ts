@@ -16,6 +16,7 @@ export const PRODUCT_PROJECTION = `{
   "images": images[]{ asset, alt },
   materials,
   description,
+  price,
   available
 }`;
 
@@ -72,4 +73,17 @@ export function getProduct(slug: string): Promise<Product | null> {
 }
 export function getCategories(): Promise<Category[]> {
   return safeFetch(categoriesQuery, {}, []);
+}
+
+// Used only by /api/checkout to re-verify price and availability at the
+// moment of purchase. Deliberately bypasses safeFetch's demo-data fallback —
+// if Sanity is unreachable, checkout must fail loudly, not silently sell at a
+// fake or stale price.
+export async function getProductsForCheckout(
+  ids: string[],
+): Promise<Pick<Product, "_id" | "title" | "price" | "available">[]> {
+  return client.fetch(
+    `*[_type == "product" && _id in $ids]{ _id, title, price, available }`,
+    { ids },
+  );
 }
