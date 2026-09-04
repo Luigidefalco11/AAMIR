@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { urlFor } from "@/sanity/client";
+import { urlFor, sanityImageLoader } from "@/sanity/client";
 import type { SanityImage } from "@/sanity/types";
 
 export function SafeImage({
@@ -37,10 +37,11 @@ export function SafeImage({
       </div>
     );
   }
-  const src = urlFor(image).width(1200).auto("format").url();
+  const src = urlFor(image).url();
   return (
     <Image
       src={src}
+      loader={sanityImageLoader}
       alt={alt}
       fill
       sizes={sizes ?? "(max-width: 768px) 100vw, 50vw"}

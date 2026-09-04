@@ -4,7 +4,7 @@ import type { Product } from "@/sanity/types";
 // live Sanity project is configured; once the CMS is live (isConfigured), the
 // products managed there replace these automatically.
 
-type Cat = "collane" | "bracciali" | "orecchini" | "anelli";
+export type Cat = "collane" | "bracciali" | "orecchini" | "anelli";
 
 type Seed = {
   n: number; // photo number -> /products/img-NN.jpeg
@@ -18,7 +18,7 @@ type Seed = {
 
 // Categorisation from a visual review of each photo (parures assigned to their
 // dominant piece).
-const SEEDS: Seed[] = [
+export const SEEDS: Seed[] = [
   { n: 1, cat: "collane", it: "Collana Perla e Fiore", en: "Pearl & Flower Necklace", mIt: "Perle di fiume e calcedonio azzurro", mEn: "Freshwater pearls and blue chalcedony" },
   { n: 2, cat: "collane", it: "Collana Conchiglia", en: "Shell Necklace", mIt: "Pasta turchese, conchiglia e corallo", mEn: "Turquoise paste, shell and coral" },
   { n: 3, cat: "collane", it: "Collana Corallo Cammeo", en: "Coral Cameo Necklace", mIt: "Corallo e cammeo di conchiglia", mEn: "Coral and shell cameo", feat: true },
@@ -75,7 +75,7 @@ const SEEDS: Seed[] = [
 
 // Description templates per category ({m} = materials). Cycled by index so the
 // catalog reads with variety rather than one repeated line.
-const DESC: Record<Cat, { it: string[]; en: string[] }> = {
+export const DESC: Record<Cat, { it: string[]; en: string[] }> = {
   collane: {
     it: [
       "Collana realizzata interamente a mano da Aamir. {m}, selezionati e montati uno a uno. Pezzo unico.",
@@ -120,7 +120,7 @@ const DESC: Record<Cat, { it: string[]; en: string[] }> = {
   },
 };
 
-function slugify(s: string): string {
+export function slugify(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")

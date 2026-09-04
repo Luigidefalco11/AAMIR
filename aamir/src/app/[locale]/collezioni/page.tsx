@@ -26,9 +26,9 @@ export default async function CollectionsPage({
       <h1 className="font-serif text-4xl mb-10">{t("title")}</h1>
       <CategoryFilter locale={locale} active={null} labels={labels} />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-        {products.map((p, i) => (
+        {products.map((p) => (
           <Reveal key={p._id}>
-            <ProductCard product={p} locale={l} index={i} />
+            <ProductCard product={p} locale={l} />
           </Reveal>
         ))}
       </div>

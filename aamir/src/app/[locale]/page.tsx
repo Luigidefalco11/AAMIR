@@ -81,9 +81,9 @@ export default async function HomePage({
             <h2 className="font-serif text-3xl mb-10">{tc("title")}</h2>
           </Reveal>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-            {featured.slice(0, 6).map((p, i) => (
+            {featured.slice(0, 6).map((p) => (
               <Reveal key={p._id}>
-                <ProductCard product={p} locale={l} index={i} />
+                <ProductCard product={p} locale={l} />
               </Reveal>
             ))}
           </div>

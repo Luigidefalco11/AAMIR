@@ -4,7 +4,8 @@ import { ProductCard } from "./ProductCard";
 import type { Product } from "@/sanity/types";
 
 vi.mock("@/sanity/client", () => ({
-  urlFor: () => ({ width: () => ({ auto: () => ({ url: () => "https://cdn.sanity.io/x.jpg" }) }) }),
+  urlFor: () => ({ url: () => "https://cdn.sanity.io/x.jpg" }),
+  sanityImageLoader: () => "https://cdn.sanity.io/x.jpg",
 }));
 
 const product: Product = {
@@ -24,10 +25,5 @@ describe("ProductCard", () => {
     expect(screen.getByText("Onda Necklace")).toBeInTheDocument();
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/en/collezioni/collane/collana-onda");
-  });
-
-  it("still renders correctly when given a grid index", () => {
-    render(<ProductCard product={product} locale="en" index={1} />);
-    expect(screen.getByText("Onda Necklace")).toBeInTheDocument();
   });
 });

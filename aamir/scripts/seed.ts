@@ -1,5 +1,9 @@
 import { createClient } from "@sanity/client";
 import { config } from "dotenv";
+import { createReadStream } from "node:fs";
+import { join } from "node:path";
+import { SEEDS, DESC, slugify } from "../src/lib/demoProducts";
+
 config({ path: ".env.local" });
 
 const client = createClient({
@@ -39,30 +43,51 @@ async function run() {
       en: "Aamir has worked in goldsmithing for over ten years, here in Italy.",
     },
     email: "info@aamirjewelry.it",
-    instagram: "aamirjewelry",
+    instagram: "aamir.jewelry",
     metaDescription: { it: "Gioielleria artigianale a Salerno.", en: "Artisan jewelry in Salerno." },
   });
 
-  // sample products (no images — SafeImage placeholder will render)
-  const samples = [
-    { slug: "collana-onda", cat: "collane", it: "Collana Onda", en: "Onda Necklace", featured: true },
-    { slug: "anello-scoglio", cat: "anelli", it: "Anello Scoglio", en: "Scoglio Ring", featured: true },
-    { slug: "orecchini-riva", cat: "orecchini", it: "Orecchini Riva", en: "Riva Earrings", featured: true },
-  ];
-  for (let i = 0; i < samples.length; i++) {
-    const s = samples[i];
+  const categoryCover: Partial<Record<string, string>> = {};
+
+  for (let i = 0; i < SEEDS.length; i++) {
+    const s = SEEDS[i];
+    const img = String(s.n).padStart(2, "0");
+    const filePath = join(process.cwd(), "public", "products", `img-${img}.jpeg`);
+    const asset = await client.assets.upload("image", createReadStream(filePath), {
+      filename: `img-${img}.jpeg`,
+    });
+
+    const it = DESC[s.cat].it[i % DESC[s.cat].it.length].replace("{m}", s.mIt);
+    const en = DESC[s.cat].en[i % DESC[s.cat].en.length].replace("{m}", s.mEn);
+    const slug = `${slugify(s.en)}-${s.n}`;
+
     await client.createOrReplace({
-      _id: `product-${s.slug}`,
+      _id: `product-${slug}`,
       _type: "product",
       title: { it: s.it, en: s.en },
-      slug: { current: s.slug },
+      slug: { current: slug },
       category: { _type: "reference", _ref: `category-${s.cat}` },
-      materials: { it: "Oro 18k, pietra naturale", en: "18k gold, natural stone" },
-      description: { it: "Pezzo unico lavorato a mano.", en: "Unique handcrafted piece." },
-      featured: s.featured,
+      images: [
+        { _type: "image", asset: { _type: "reference", _ref: asset._id }, alt: s.it },
+      ],
+      materials: { it: s.mIt, en: s.mEn },
+      description: { it, en },
+      featured: Boolean(s.feat),
       available: true,
       order: i,
     });
+
+    categoryCover[s.cat] ??= asset._id;
+    console.log(`Seeded product ${i + 1}/${SEEDS.length}: ${s.it}`);
+  }
+
+  for (const c of CATEGORIES) {
+    const assetId = categoryCover[c.slug];
+    if (!assetId) continue;
+    await client
+      .patch(`category-${c.slug}`)
+      .set({ cover: { _type: "image", asset: { _type: "reference", _ref: assetId }, alt: c.it } })
+      .commit();
   }
 
   console.log("Seed complete.");
