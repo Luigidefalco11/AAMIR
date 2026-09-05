@@ -1,4 +1,5 @@
 import { client } from "./client";
+import { writeClient } from "./writeClient";
 import { isConfigured } from "./env";
 import type { Product, Category, SiteSettings } from "./types";
 import {
@@ -32,9 +33,13 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0]{
   legalBusinessName, vatNumber, businessAddress
 }`;
 
-export const featuredProductsQuery = `*[_type == "product" && featured == true] | order(order asc) ${PRODUCT_PROJECTION}`;
-export const allProductsQuery = `*[_type == "product"] | order(order asc) ${PRODUCT_PROJECTION}`;
-export const productsByCategoryQuery = `*[_type == "product" && category->slug.current == $slug] | order(order asc) ${PRODUCT_PROJECTION}`;
+// Every piece is one-of-a-kind: once sold (available == false) it must drop
+// out of the listings immediately. The single-product query deliberately does
+// NOT filter on availability — a sold piece's own page still resolves and
+// renders the "Venduto" state instead of a 404.
+export const featuredProductsQuery = `*[_type == "product" && featured == true && available == true] | order(order asc) ${PRODUCT_PROJECTION}`;
+export const allProductsQuery = `*[_type == "product" && available == true] | order(order asc) ${PRODUCT_PROJECTION}`;
+export const productsByCategoryQuery = `*[_type == "product" && category->slug.current == $slug && available == true] | order(order asc) ${PRODUCT_PROJECTION}`;
 export const productBySlugQuery = `*[_type == "product" && slug.current == $slug][0] ${PRODUCT_PROJECTION}`;
 export const categoriesQuery = `*[_type == "category"] | order(order asc) ${CATEGORY_PROJECTION}`;
 
@@ -78,11 +83,14 @@ export function getCategories(): Promise<Category[]> {
 // Used only by /api/checkout to re-verify price and availability at the
 // moment of purchase. Deliberately bypasses safeFetch's demo-data fallback —
 // if Sanity is unreachable, checkout must fail loudly, not silently sell at a
-// fake or stale price.
+// fake or stale price. For the same reason it reads through writeClient
+// (useCdn: false) rather than the shared CDN-cached `client`: a price or an
+// availability flag served from cache could be minutes stale, which is
+// exactly what this check exists to prevent.
 export async function getProductsForCheckout(
   ids: string[],
 ): Promise<Pick<Product, "_id" | "title" | "price" | "available">[]> {
-  return client.fetch(
+  return writeClient.fetch(
     `*[_type == "product" && _id in $ids]{ _id, title, price, available }`,
     { ids },
   );
