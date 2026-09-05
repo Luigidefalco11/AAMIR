@@ -13,6 +13,7 @@ export async function Footer() {
         <div className="flex gap-6">
           <a href={`mailto:${email}`} className="hover:text-[color:var(--color-primary)] transition-colors">{email}</a>
           <a href={instagramUrl(ig)} target="_blank" rel="noopener noreferrer" className="hover:text-[color:var(--color-primary)] transition-colors">@{ig}</a>
+          <a href="/it/termini" className="hover:text-[color:var(--color-primary)] transition-colors">Termini</a>
         </div>
         <span className="text-[color:var(--color-text)]/70">Salerno, Italia</span>
       </div>
