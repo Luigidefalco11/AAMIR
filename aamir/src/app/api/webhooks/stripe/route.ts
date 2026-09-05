@@ -5,6 +5,21 @@ import { writeClient } from "@/sanity/writeClient";
 import { getSiteSettings } from "@/sanity/queries";
 import { sendOrderConfirmationEmail, sendOrderNotificationEmail } from "@/lib/email";
 
+// Metadata comes back from Stripe as an opaque string and is not necessarily
+// written by our own /api/checkout (any session on this account lands here),
+// so a malformed value must degrade to "no products to mark sold" rather than
+// throw an uncaught exception out of the handler.
+function parseProductIds(raw: string | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    console.error("[webhook] malformed productIds metadata:", raw);
+    return [];
+  }
+}
+
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature") ?? "";
@@ -22,35 +37,49 @@ export async function POST(request: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
-  const productIds: string[] = JSON.parse(session.metadata?.productIds ?? "[]");
 
-  // Stripe may redeliver the same event — never create a second order for
-  // the same Checkout Session.
-  const existing = await writeClient.fetch<{ _id: string } | null>(
-    `*[_type == "order" && stripeSessionId == $id][0]{ _id }`,
-    { id: session.id },
-  );
+  // checkout.session.completed also fires for delayed-notification payment
+  // methods (bank debits, vouchers) where the money hasn't arrived yet. Only
+  // a session whose payment_status is "paid" is an actual sale — anything
+  // else must not create an order, mark pieces sold, or email the customer.
+  if (session.payment_status !== "paid") {
+    return NextResponse.json({ received: true, skipped: "unpaid" });
+  }
 
-  let items: { title: string; price: number }[] = [];
+  const productIds = parseProductIds(session.metadata?.productIds);
+
   const total = (session.amount_total ?? 0) / 100;
+  const shippingTotal = (session.shipping_cost?.amount_total ?? 0) / 100;
   const customerEmail = session.customer_details?.email ?? "";
   const shipping = session.customer_details?.address;
 
-  if (!existing) {
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-    items = lineItems.data.map((li) => ({
-      title: li.description ?? "Gioiello AAMIR",
-      price: (li.amount_total ?? 0) / 100,
-    }));
+  const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+  const items = lineItems.data.map((li) => ({
+    title: li.description ?? "Gioiello AAMIR",
+    price: (li.amount_total ?? 0) / 100,
+  }));
 
-    try {
-      await writeClient.create({
+  const createdAt = new Date().toISOString();
+
+  // Stripe may redeliver the same event, and two deliveries can even be in
+  // flight at once. A fetch-then-create pair would race (both read "no order",
+  // both create one); createIfNotExists is a single atomic mutation keyed on
+  // the deterministic order id, so exactly one delivery can ever create the
+  // document. Asking for the mutation result (instead of the document) tells
+  // us which delivery that was: operation is "create" for the one that won
+  // and "none" for every redelivery.
+  let isFirstDelivery: boolean;
+  try {
+    const result = await writeClient.createIfNotExists(
+      {
+        _id: `order-${session.id}`,
         _type: "order",
         stripeSessionId: session.id,
         stripePaymentIntentId:
           typeof session.payment_intent === "string" ? session.payment_intent : "",
         items,
         total,
+        shippingTotal,
         customerEmail,
         shippingAddress: shipping
           ? {
@@ -63,13 +92,49 @@ export async function POST(request: Request) {
             }
           : undefined,
         status: "paid",
-        createdAt: new Date().toISOString(),
+        createdAt,
+        // The cart gates checkout on the Terms checkbox, so a session that
+        // reached payment necessarily had them accepted — record when, as a
+        // basic distance-selling compliance trail.
+        acceptedTermsAt: createdAt,
+      },
+      { returnFirst: true, returnDocuments: false },
+    );
+    isFirstDelivery = (result.results ?? []).some((r) => r.operation === "create");
+  } catch (err) {
+    console.error("[webhook] failed to record order:", err);
+    // Return 500 so Stripe retries — no order was recorded, so a retry is
+    // safe and required to not lose the sale record.
+    return NextResponse.json({ error: "order-recording-failed" }, { status: 500 });
+  }
+
+  // Emails are tied to order creation, not to the retryable steps below: they
+  // run only for the delivery that actually created the document, so they are
+  // sent exactly once, and they run *before* the product patch so a patch that
+  // keeps failing can never cost the customer their confirmation email.
+  // Email failures themselves must not trigger a retry — the order is already
+  // recorded, and a retry would skip creation (and so skip these) anyway.
+  if (isFirstDelivery) {
+    try {
+      const settings = await getSiteSettings();
+      const notifyEmail = settings?.email ?? "info@aamirjewelry.it";
+      if (customerEmail) {
+        await sendOrderConfirmationEmail({
+          to: customerEmail,
+          orderTotal: total,
+          shippingTotal,
+          items,
+        });
+      }
+      await sendOrderNotificationEmail({
+        to: notifyEmail,
+        orderTotal: total,
+        shippingTotal,
+        items,
+        customerEmail,
       });
     } catch (err) {
-      console.error("[webhook] failed to record order:", err);
-      // Return 500 so Stripe retries — no order was recorded, so a retry is
-      // safe and required to not lose the sale record.
-      return NextResponse.json({ error: "order-recording-failed" }, { status: 500 });
+      console.error("[webhook] failed to send emails:", err);
     }
   }
 
@@ -78,31 +143,17 @@ export async function POST(request: Request) {
   // so this runs on every delivery of this event, regardless of whether the
   // order already existed. That's what lets a redelivery recover from a
   // patch that failed on a prior delivery even though order-creation above
-  // is (correctly) skipped once the order exists: order-creation is NOT
-  // idempotent-safe to repeat, but this patch is.
+  // is (correctly) a no-op once the order exists.
   try {
     await Promise.all(
       productIds.map((id) => writeClient.patch(id).set({ available: false }).commit()),
     );
   } catch (err) {
     console.error("[webhook] failed to mark products unavailable:", err);
-    // Return 500 so Stripe retries just this step — the order (if new) is
-    // already recorded above, so a retry only re-attempts the patch.
+    // Return 500 so Stripe retries just this step — the order is already
+    // recorded and the emails already sent above, so a retry only re-attempts
+    // the patch.
     return NextResponse.json({ error: "product-patch-failed" }, { status: 500 });
-  }
-
-  // Email failures must not trigger a Stripe retry — the order (if new) is
-  // already safely recorded above, and a retry would just re-run this email
-  // step without re-creating the order (thanks to the idempotency check).
-  try {
-    const settings = await getSiteSettings();
-    const notifyEmail = settings?.email ?? "info@aamirjewelry.it";
-    if (customerEmail) {
-      await sendOrderConfirmationEmail({ to: customerEmail, orderTotal: total, items });
-    }
-    await sendOrderNotificationEmail({ to: notifyEmail, orderTotal: total, items, customerEmail });
-  } catch (err) {
-    console.error("[webhook] failed to send emails:", err);
   }
 
   return NextResponse.json({ received: true });

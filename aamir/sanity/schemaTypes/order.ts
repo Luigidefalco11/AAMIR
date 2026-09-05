@@ -22,6 +22,7 @@ export const order = defineType({
         },
       ],
     }),
+    defineField({ name: "shippingTotal", title: "Spedizione (EUR)", type: "number" }),
     defineField({ name: "total", title: "Totale (EUR)", type: "number" }),
     defineField({ name: "customerEmail", title: "Email cliente", type: "string" }),
     defineField({
@@ -50,6 +51,12 @@ export const order = defineType({
       initialValue: "paid",
     }),
     defineField({ name: "createdAt", title: "Data", type: "datetime" }),
+    defineField({
+      name: "acceptedTermsAt",
+      title: "Termini accettati il",
+      type: "datetime",
+      readOnly: true,
+    }),
   ],
   preview: {
     select: { title: "customerEmail", total: "total", status: "status" },
