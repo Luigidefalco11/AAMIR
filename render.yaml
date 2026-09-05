@@ -15,3 +15,17 @@ services:
         value: production
       - key: NEXT_PUBLIC_SANITY_API_VERSION
         value: "2024-10-01"
+      # sync: false — Render prompts for the value in its dashboard and keeps
+      # it out of the repository. Never commit a real value for any of these.
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      - key: SANITY_WRITE_TOKEN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false

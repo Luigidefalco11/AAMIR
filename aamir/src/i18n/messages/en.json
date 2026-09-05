@@ -41,6 +41,7 @@
     "intro": "For enquiries about our pieces, get in touch.",
     "emailLabel": "Email"
   },
+  "footer": { "terms": "Terms" },
   "common": { "instagram": "Instagram" },
   "notFound": { "title": "Page not found", "cta": "Back to home" }
 }

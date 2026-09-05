@@ -26,7 +26,7 @@ export default async function LocaleLayout({
       <CartProvider>
         <Header locale={locale} />
         <main className="min-h-[60vh]">{children}</main>
-        <Footer />
+        <Footer locale={locale} />
       </CartProvider>
     </NextIntlClientProvider>
   );

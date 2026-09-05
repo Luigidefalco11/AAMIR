@@ -41,6 +41,7 @@
     "intro": "Per informazioni sui nostri pezzi, scrivici.",
     "emailLabel": "Email"
   },
+  "footer": { "terms": "Termini" },
   "common": { "instagram": "Instagram" },
   "notFound": { "title": "Pagina non trovata", "cta": "Torna alla home" }
 }
