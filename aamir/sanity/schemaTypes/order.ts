@@ -1,5 +1,10 @@
 import { defineType, defineField } from "sanity";
 
+// PRIVACY: this dataset is deliberately PUBLIC (the storefront reads products
+// and images with no token), so anything stored here is readable by anyone who
+// knows the project id. Customer email and shipping address are therefore
+// NEVER written to this document — they live only in the Stripe Dashboard and
+// in the order notification email sent to Aamir's inbox. Do not add them back.
 export const order = defineType({
   name: "order",
   title: "Ordine",
@@ -24,20 +29,6 @@ export const order = defineType({
     }),
     defineField({ name: "shippingTotal", title: "Spedizione (EUR)", type: "number" }),
     defineField({ name: "total", title: "Totale (EUR)", type: "number" }),
-    defineField({ name: "customerEmail", title: "Email cliente", type: "string" }),
-    defineField({
-      name: "shippingAddress",
-      title: "Indirizzo di spedizione",
-      type: "object",
-      fields: [
-        defineField({ name: "name", title: "Nome", type: "string" }),
-        defineField({ name: "line1", title: "Indirizzo", type: "string" }),
-        defineField({ name: "line2", title: "Indirizzo (2)", type: "string" }),
-        defineField({ name: "city", title: "Città", type: "string" }),
-        defineField({ name: "postalCode", title: "CAP", type: "string" }),
-        defineField({ name: "country", title: "Paese", type: "string" }),
-      ],
-    }),
     defineField({
       name: "status",
       title: "Stato",
@@ -57,9 +48,19 @@ export const order = defineType({
       type: "datetime",
       readOnly: true,
     }),
+    // Set once the confirmation + notification emails have gone out. Its
+    // absence is what lets a later webhook redelivery notice that a previous
+    // delivery died between recording the order and sending the emails, and
+    // retry the send.
+    defineField({
+      name: "emailsSentAt",
+      title: "Email inviate il",
+      type: "datetime",
+      readOnly: true,
+    }),
   ],
   preview: {
-    select: { title: "customerEmail", total: "total", status: "status" },
+    select: { title: "stripeSessionId", total: "total", status: "status" },
     prepare({ title, total, status }: { title?: string; total?: number; status?: string }) {
       return {
         title: title || "Ordine",

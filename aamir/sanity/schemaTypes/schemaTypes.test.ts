@@ -35,6 +35,41 @@ describe("sanity schema", () => {
     expect(field?.title).toBe("Spedizione (EUR)");
   });
 
+  it("order stores no customer PII, because the dataset is publicly readable", () => {
+    const order = schemaTypes.find((t) => t.name === "order");
+    const names = (order?.fields ?? []).map((f: { name: string }) => f.name);
+    expect(names).not.toContain("customerEmail");
+    expect(names).not.toContain("shippingAddress");
+    // The non-PII order record is otherwise intact.
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "stripeSessionId",
+        "stripePaymentIntentId",
+        "items",
+        "shippingTotal",
+        "total",
+        "status",
+        "createdAt",
+        "acceptedTermsAt",
+      ]),
+    );
+  });
+
+  it("order preview does not surface PII as its title", () => {
+    const order = schemaTypes.find((t) => t.name === "order");
+    const select = (order as { preview?: { select?: Record<string, string> } })?.preview?.select;
+    expect(Object.values(select ?? {})).not.toContain("customerEmail");
+  });
+
+  it("order records when its emails were sent, so a redelivery can retry a failed send", () => {
+    const order = schemaTypes.find((t) => t.name === "order");
+    const field = (order?.fields ?? []).find(
+      (f: { name: string }) => f.name === "emailsSentAt",
+    );
+    expect(field).toBeDefined();
+    expect(field?.type).toBe("datetime");
+  });
+
   it("order records when the terms were accepted", () => {
     const order = schemaTypes.find((t) => t.name === "order");
     const field = (order?.fields ?? []).find(

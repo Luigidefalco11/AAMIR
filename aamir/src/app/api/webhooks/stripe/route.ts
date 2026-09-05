@@ -51,15 +51,18 @@ export async function POST(request: Request) {
   const total = (session.amount_total ?? 0) / 100;
   const shippingTotal = (session.shipping_cost?.amount_total ?? 0) / 100;
   const customerEmail = session.customer_details?.email ?? "";
-  const shipping = session.customer_details?.address;
 
-  const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+  // Stripe defaults this to 10 items; an order of 11+ pieces would otherwise be
+  // silently truncated in both the recorded order and the emails. 100 is
+  // comfortably above any realistic cart for a one-of-a-kind catalogue.
+  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
   const items = lineItems.data.map((li) => ({
     title: li.description ?? "Gioiello AAMIR",
     price: (li.amount_total ?? 0) / 100,
   }));
 
   const createdAt = new Date().toISOString();
+  const orderId = `order-${session.id}`;
 
   // Stripe may redeliver the same event, and two deliveries can even be in
   // flight at once. A fetch-then-create pair would race (both read "no order",
@@ -72,7 +75,7 @@ export async function POST(request: Request) {
   try {
     const result = await writeClient.createIfNotExists(
       {
-        _id: `order-${session.id}`,
+        _id: orderId,
         _type: "order",
         stripeSessionId: session.id,
         stripePaymentIntentId:
@@ -80,17 +83,10 @@ export async function POST(request: Request) {
         items,
         total,
         shippingTotal,
-        customerEmail,
-        shippingAddress: shipping
-          ? {
-              name: session.customer_details?.name ?? "",
-              line1: shipping.line1 ?? "",
-              line2: shipping.line2 ?? "",
-              city: shipping.city ?? "",
-              postalCode: shipping.postal_code ?? "",
-              country: shipping.country ?? "",
-            }
-          : undefined,
+        // Deliberately NOT stored: customer email and shipping address. This
+        // Sanity dataset is public (the storefront reads it without a token),
+        // so any PII written here would be readable by anyone with the project
+        // id. Both stay in Stripe and in the notification email to Aamir.
         status: "paid",
         createdAt,
         // The cart gates checkout on the Terms checkbox, so a session that
@@ -98,7 +94,10 @@ export async function POST(request: Request) {
         // basic distance-selling compliance trail.
         acceptedTermsAt: createdAt,
       },
-      { returnFirst: true, returnDocuments: false },
+      // autoGenerateArrayKeys: without it the `items` entries reach Sanity
+      // without `_key`, and Studio shows a "Missing keys" repair banner instead
+      // of the purchased pieces.
+      { returnFirst: true, returnDocuments: false, autoGenerateArrayKeys: true },
     );
     isFirstDelivery = (result.results ?? []).some((r) => r.operation === "create");
   } catch (err) {
@@ -108,13 +107,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "order-recording-failed" }, { status: 500 });
   }
 
-  // Emails are tied to order creation, not to the retryable steps below: they
-  // run only for the delivery that actually created the document, so they are
-  // sent exactly once, and they run *before* the product patch so a patch that
-  // keeps failing can never cost the customer their confirmation email.
+  // Emails run for the delivery that actually created the document, and they
+  // run *before* the product patch so a patch that keeps failing can never cost
+  // the customer their confirmation email.
+  //
+  // On a redelivery the order already exists, so creation no-ops — but a prior
+  // delivery may have died (or had Resend fail) between recording the order and
+  // sending the emails. `emailsSentAt` is the durable record of the send, so a
+  // redelivery that finds it unset retries the send now, using this delivery's
+  // own Stripe reads (deterministic per session). Once it is set, no redelivery
+  // ever sends again, so the customer never gets a duplicate confirmation.
+  let shouldSendEmails = isFirstDelivery;
+  if (!isFirstDelivery) {
+    try {
+      const emailsSentAt = await writeClient.fetch<string | null>(
+        `*[_id == $id][0].emailsSentAt`,
+        { id: orderId },
+      );
+      shouldSendEmails = !emailsSentAt;
+    } catch (err) {
+      // Unknown state: prefer not sending over risking a duplicate. A later
+      // redelivery can still read the flag and recover.
+      console.error("[webhook] failed to read emailsSentAt:", err);
+      shouldSendEmails = false;
+    }
+  }
+
   // Email failures themselves must not trigger a retry — the order is already
-  // recorded, and a retry would skip creation (and so skip these) anyway.
-  if (isFirstDelivery) {
+  // recorded, so a 500 here would only re-run the whole handler for a transient
+  // Resend problem. Leaving `emailsSentAt` unset is the retry mechanism: the
+  // next unrelated redelivery of this event picks the send back up.
+  if (shouldSendEmails) {
     try {
       const settings = await getSiteSettings();
       const notifyEmail = settings?.email ?? "info@aamirjewelry.it";
@@ -133,6 +156,9 @@ export async function POST(request: Request) {
         items,
         customerEmail,
       });
+      // Only after both sends succeeded — a throw above leaves this unset so a
+      // later redelivery retries.
+      await writeClient.patch(orderId).set({ emailsSentAt: new Date().toISOString() }).commit();
     } catch (err) {
       console.error("[webhook] failed to send emails:", err);
     }

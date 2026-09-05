@@ -10,12 +10,33 @@ vi.mock("@/lib/stripe", () => ({
 }));
 
 const createIfNotExistsMock = vi.fn();
+const fetchMock = vi.fn();
+// Product patches and the order's emailsSentAt patch go through the same
+// client method, so the mock routes them to separate commit mocks (keyed on the
+// document id) — otherwise a test that makes one patch fail would hit whichever
+// happened to run first.
 const patchCommitMock = vi.fn();
-const patchSetMock = vi.fn(() => ({ commit: patchCommitMock }));
+const patchSetMock = vi.fn();
+const orderPatchSetMock = vi.fn();
+const orderPatchCommitMock = vi.fn();
 vi.mock("@/sanity/writeClient", () => ({
   writeClient: {
     createIfNotExists: (...args: unknown[]) => createIfNotExistsMock(...args),
-    patch: () => ({ set: patchSetMock }),
+    fetch: (...args: unknown[]) => fetchMock(...args),
+    patch: (id: string) =>
+      id.startsWith("order-")
+        ? {
+            set: (attrs: unknown) => {
+              orderPatchSetMock(attrs);
+              return { commit: () => orderPatchCommitMock() };
+            },
+          }
+        : {
+            set: (attrs: unknown) => {
+              patchSetMock(attrs);
+              return { commit: () => patchCommitMock() };
+            },
+          },
   },
 }));
 
@@ -65,10 +86,15 @@ describe("POST /api/webhooks/stripe", () => {
     constructEventMock.mockReset();
     listLineItemsMock.mockReset();
     createIfNotExistsMock.mockReset();
+    fetchMock.mockReset();
     patchCommitMock.mockReset();
     patchSetMock.mockClear();
+    orderPatchSetMock.mockClear();
+    orderPatchCommitMock.mockReset();
     sendConfirmationMock.mockClear();
     sendNotificationMock.mockClear();
+    // Default: a redelivery finds the emails already sent.
+    fetchMock.mockResolvedValue("2024-01-01T00:00:00.000Z");
     listLineItemsMock.mockResolvedValue({
       data: [{ description: "Collana Onda", amount_total: 45000 }],
     });
@@ -107,7 +133,6 @@ describe("POST /api/webhooks/stripe", () => {
         stripePaymentIntentId: "pi_123",
         total: 459,
         shippingTotal: 9,
-        customerEmail: "cliente@example.com",
         status: "paid",
       }),
       expect.objectContaining({ returnDocuments: false }),
@@ -123,6 +148,170 @@ describe("POST /api/webhooks/stripe", () => {
         shippingTotal: 9,
       }),
     );
+  });
+
+  it("never writes customer PII to the public Sanity dataset", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(CREATED);
+
+    await POST(makeRequest("{}"));
+
+    // The dataset is world-readable, so email and address must not reach it —
+    // they stay in Stripe and in the notification email to Aamir.
+    const doc = createIfNotExistsMock.mock.calls[0][0];
+    expect(doc).not.toHaveProperty("customerEmail");
+    expect(doc).not.toHaveProperty("shippingAddress");
+    expect(JSON.stringify(doc)).not.toContain("cliente@example.com");
+    expect(JSON.stringify(doc)).not.toContain("Via Roma 1");
+    expect(JSON.stringify(doc)).not.toContain("Mario Rossi");
+    // ...while the inbox notification still gets the email it needs.
+    expect(sendNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ customerEmail: "cliente@example.com" }),
+    );
+  });
+
+  it("asks Stripe for up to 100 line items, so an 11+ piece order isn't truncated", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(CREATED);
+
+    await POST(makeRequest("{}"));
+
+    expect(listLineItemsMock).toHaveBeenCalledWith("cs_test_123", { limit: 100 });
+  });
+
+  it("records every line item of a large order", async () => {
+    const many = Array.from({ length: 25 }, (_, i) => ({
+      description: `Pezzo ${i}`,
+      amount_total: 10000,
+    }));
+    listLineItemsMock.mockResolvedValue({ data: many });
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(CREATED);
+
+    await POST(makeRequest("{}"));
+
+    expect(createIfNotExistsMock.mock.calls[0][0].items).toHaveLength(25);
+  });
+
+  it("asks Sanity to generate array _keys, so Studio doesn't show a 'Missing keys' banner", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(CREATED);
+
+    await POST(makeRequest("{}"));
+
+    expect(createIfNotExistsMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ autoGenerateArrayKeys: true }),
+    );
+  });
+
+  it("stamps emailsSentAt on the order once both emails have gone out", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(CREATED);
+
+    await POST(makeRequest("{}"));
+
+    expect(orderPatchSetMock).toHaveBeenCalledTimes(1);
+    const attrs = orderPatchSetMock.mock.calls[0][0] as { emailsSentAt: string };
+    expect(typeof attrs.emailsSentAt).toBe("string");
+    expect(Number.isNaN(Date.parse(attrs.emailsSentAt))).toBe(false);
+  });
+
+  it("leaves emailsSentAt unset when sending fails, so a later redelivery retries", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(CREATED);
+    sendConfirmationMock.mockRejectedValueOnce(new Error("resend down"));
+
+    const res = await POST(makeRequest("{}"));
+
+    // The order is recorded, so an email failure must not force a full retry...
+    expect(res.status).toBe(200);
+    // ...but the flag stays unset, which is what arms the retry.
+    expect(orderPatchSetMock).not.toHaveBeenCalled();
+  });
+
+  it("re-sends the emails on a redelivery whose order has no emailsSentAt (prior delivery died mid-way)", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(ALREADY_EXISTED);
+    fetchMock.mockResolvedValue(null);
+
+    const res = await POST(makeRequest("{}"));
+
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("emailsSentAt"), {
+      id: "order-cs_test_123",
+    });
+    // Rebuilt from this delivery's own Stripe reads, which are deterministic
+    // per session, so the customer gets the same email they should have had.
+    expect(sendConfirmationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "cliente@example.com", orderTotal: 459 }),
+    );
+    expect(sendNotificationMock).toHaveBeenCalledTimes(1);
+    expect(orderPatchSetMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not re-send on a redelivery whose order already has emailsSentAt", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(ALREADY_EXISTED);
+    fetchMock.mockResolvedValue("2024-05-01T10:00:00.000Z");
+
+    const res = await POST(makeRequest("{}"));
+
+    expect(res.status).toBe(200);
+    expect(sendConfirmationMock).not.toHaveBeenCalled();
+    expect(sendNotificationMock).not.toHaveBeenCalled();
+    expect(orderPatchSetMock).not.toHaveBeenCalled();
+  });
+
+  it("does not re-send when the emailsSentAt read fails (unknown state beats a duplicate)", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(ALREADY_EXISTED);
+    fetchMock.mockRejectedValue(new Error("sanity read down"));
+
+    const res = await POST(makeRequest("{}"));
+
+    expect(res.status).toBe(200);
+    expect(sendConfirmationMock).not.toHaveBeenCalled();
+  });
+
+  it("does not read emailsSentAt on a first delivery — creation alone proves the emails are owed", async () => {
+    constructEventMock.mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: completedSession },
+    });
+    createIfNotExistsMock.mockResolvedValue(CREATED);
+
+    await POST(makeRequest("{}"));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(sendConfirmationMock).toHaveBeenCalledTimes(1);
   });
 
   it("records when the terms were accepted, alongside the order date", async () => {
@@ -168,8 +357,8 @@ describe("POST /api/webhooks/stripe", () => {
     expect(res.status).toBe(200);
     // The write itself is always the same atomic call; it just no-ops.
     expect(createIfNotExistsMock).toHaveBeenCalledTimes(1);
-    // Emails are gated on that call having genuinely created the document, so
-    // the customer never receives a second confirmation.
+    // The recorded order already carries emailsSentAt, so the customer never
+    // receives a second confirmation.
     expect(sendConfirmationMock).not.toHaveBeenCalled();
     expect(sendNotificationMock).not.toHaveBeenCalled();
     // Marking a product unavailable is naturally idempotent, so it's expected
