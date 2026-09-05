@@ -46,6 +46,9 @@ export function CartPageClient({ locale, labels }: { locale: Locale; labels: Lab
       if (!res.ok) throw new Error("checkout-failed");
 
       const data = await res.json();
+      // Never navigate to a missing url — that would land the customer on
+      // "/null" instead of showing them the error.
+      if (!data.url) throw new Error("checkout-failed");
       window.location.href = data.url;
     } catch {
       setError(labels.checkoutError);

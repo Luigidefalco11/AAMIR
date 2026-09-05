@@ -72,4 +72,45 @@ describe("POST /api/checkout", () => {
     expect(sessionArgs.success_url).toContain("/it/checkout/successo");
     expect(sessionArgs.cancel_url).toContain("/it/checkout/annullato");
   });
+
+  it("dedupes repeated product ids into a single line item", async () => {
+    getProductsForCheckoutMock.mockResolvedValue([
+      { _id: "1", title: { it: "Collana Onda" }, price: 450, available: true },
+    ]);
+    createSessionMock.mockResolvedValue({ url: "https://checkout.stripe.com/session/abc" });
+
+    const res = await POST(
+      makeRequest({ items: [{ productId: "1" }, { productId: "1" }], locale: "it" }),
+    );
+
+    expect(res.status).toBe(200);
+    // Every piece is unique (quantity 1), so the same id twice must not
+    // double-charge or produce an ambiguous availability check.
+    expect(getProductsForCheckoutMock).toHaveBeenCalledWith(["1"]);
+    expect(createSessionMock.mock.calls[0][0].line_items).toHaveLength(1);
+  });
+
+  it("returns 500 instead of a raw framework error when Stripe throws", async () => {
+    getProductsForCheckoutMock.mockResolvedValue([
+      { _id: "1", title: { it: "Collana Onda" }, price: 450, available: true },
+    ]);
+    createSessionMock.mockRejectedValue(new Error("stripe is down"));
+
+    const res = await POST(makeRequest({ items: [{ productId: "1" }] }));
+
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({ error: "stripe-unreachable" });
+  });
+
+  it("returns 500 rather than a null url the browser would navigate to", async () => {
+    getProductsForCheckoutMock.mockResolvedValue([
+      { _id: "1", title: { it: "Collana Onda" }, price: 450, available: true },
+    ]);
+    createSessionMock.mockResolvedValue({ id: "cs_test_1", url: null });
+
+    const res = await POST(makeRequest({ items: [{ productId: "1" }] }));
+
+    expect(res.status).toBe(500);
+    await expect(res.json()).resolves.toEqual({ error: "missing-checkout-url" });
+  });
 });

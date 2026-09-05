@@ -82,6 +82,29 @@ describe("CartPageClient", () => {
     );
   });
 
+  it("shows the error instead of navigating when the server answers without a url", async () => {
+    localStorage.setItem("aamir-cart", JSON.stringify([seeded]));
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ url: null }),
+    });
+    delete (window as unknown as { location: unknown }).location;
+    (window as unknown as { location: { href: string } }).location = { href: "" };
+
+    render(
+      <CartProvider>
+        <CartPageClient locale="it" labels={labels} />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: labels.checkout }));
+
+    expect(await screen.findByText(labels.checkoutError)).toBeInTheDocument();
+    // Never send the customer to "/null".
+    expect(window.location.href).toBe("");
+  });
+
   it("removes items and shows a warning when the server reports them unavailable", async () => {
     localStorage.setItem("aamir-cart", JSON.stringify([seeded]));
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
