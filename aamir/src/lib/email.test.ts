@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+vi.stubEnv("RESEND_API_KEY", "re_test_dummy");
+
 const sendMock = vi.fn().mockResolvedValue({ data: { id: "email_1" }, error: null });
 vi.mock("resend", () => ({
   Resend: class {

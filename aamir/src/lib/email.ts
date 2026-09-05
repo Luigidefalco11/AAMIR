@@ -1,6 +1,24 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY ?? "");
+// Lazy-initialized so importing this module never throws when
+// RESEND_API_KEY is unset (e.g. a build environment before secrets are
+// configured) — the clear, named error only surfaces if the client is
+// actually used without a real key.
+let _resend: Resend | undefined;
+const resend: Resend = new Proxy({} as Resend, {
+  get(_target, prop, receiver) {
+    if (!_resend) {
+      const key = process.env.RESEND_API_KEY;
+      if (!key) {
+        throw new Error(
+          "RESEND_API_KEY is not set. Configure it in .env.local (dev) or in Render's environment settings (production) before sending email.",
+        );
+      }
+      _resend = new Resend(key);
+    }
+    return Reflect.get(_resend, prop, receiver);
+  },
+});
 const FROM = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
 
 type OrderItem = { title: string; price: number };
