@@ -20,6 +20,7 @@ function TestConsumer() {
       <p data-testid="in-cart">{String(cart.isInCart("1"))}</p>
       <button onClick={() => cart.addItem(item)}>add</button>
       <button onClick={() => cart.removeItem("1")}>remove</button>
+      <button onClick={() => cart.clear()}>clear</button>
     </div>
   );
 }
@@ -57,6 +58,23 @@ describe("CartProvider", () => {
     fireEvent.click(screen.getByText("add"));
     fireEvent.click(screen.getByText("remove"));
     expect(screen.getByTestId("count")).toHaveTextContent("0");
+  });
+
+  it("clears the whole cart and persists the empty state", () => {
+    render(
+      <CartProvider>
+        <TestConsumer />
+      </CartProvider>,
+    );
+    fireEvent.click(screen.getByText("add"));
+    expect(screen.getByTestId("count")).toHaveTextContent("1");
+
+    fireEvent.click(screen.getByText("clear"));
+
+    expect(screen.getByTestId("count")).toHaveTextContent("0");
+    expect(screen.getByTestId("total")).toHaveTextContent("0");
+    // Persisted, so the emptied cart survives a reload after a purchase.
+    expect(localStorage.getItem("aamir-cart")).toBe("[]");
   });
 
   it("persists the cart to localStorage and rehydrates on next mount", async () => {
@@ -99,5 +117,31 @@ describe("CartProvider", () => {
     expect(screen.getByTestId("count")).toHaveTextContent("0");
 
     setItemSpy.mockRestore();
+  });
+
+  it("keeps the in-memory cart when localStorage reads start throwing", () => {
+    render(
+      <CartProvider>
+        <TestConsumer />
+      </CartProvider>,
+    );
+
+    // A successful read/write cycle first, so there is a known-good snapshot.
+    fireEvent.click(screen.getByText("add"));
+    expect(screen.getByTestId("count")).toHaveTextContent("1");
+
+    // Storage becomes unreadable (e.g. Safari private browsing, blocked
+    // site data). A throw is not the same as "storage is empty".
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("SecurityError");
+    });
+
+    // Any subsequent store notification re-reads the snapshot.
+    fireEvent.click(screen.getByText("add"));
+
+    expect(screen.getByTestId("count")).toHaveTextContent("1");
+    expect(screen.getByTestId("in-cart")).toHaveTextContent("true");
+
+    getItemSpy.mockRestore();
   });
 });

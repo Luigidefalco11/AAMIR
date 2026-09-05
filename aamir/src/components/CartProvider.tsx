@@ -14,11 +14,19 @@ const listeners = new Set<() => void>();
 let cachedRaw: string | null = null;
 let cachedItems: CartItem[] = EMPTY_ITEMS;
 
-function readRaw(): string | null {
+// Sentinel meaning "couldn't read storage this time". A read can throw where
+// storage is blocked outright (Safari private browsing, cookie-blocking
+// settings), and that is NOT the same as "storage is empty": returning null
+// there would make getSnapshot see a changed value and wipe a perfectly valid
+// in-memory cart. Instead we report "no change detectable" and keep serving
+// the last known-good snapshot.
+const UNREADABLE = Symbol("unreadable-storage");
+
+function readRaw(): string | null | typeof UNREADABLE {
   try {
     return localStorage.getItem(STORAGE_KEY);
   } catch {
-    return null;
+    return UNREADABLE;
   }
 }
 
@@ -32,6 +40,7 @@ function subscribe(callback: () => void) {
 // re-render) when the underlying stored value has actually changed.
 function getSnapshot(): CartItem[] {
   const raw = readRaw();
+  if (raw === UNREADABLE) return cachedItems;
   if (raw !== cachedRaw) {
     cachedRaw = raw;
     try {
@@ -72,6 +81,7 @@ type CartContextValue = {
   items: CartItem[];
   addItem: (item: CartItem) => void;
   removeItem: (productId: string) => void;
+  clear: () => void;
   isInCart: (productId: string) => boolean;
   total: number;
   count: number;
@@ -86,6 +96,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     items,
     addItem: (item) => commit(addItem(getSnapshot(), item)),
     removeItem: (productId) => commit(removeItem(getSnapshot(), productId)),
+    // Used after a completed purchase: goes through the same store commit as
+    // every other mutation, so persistence and subscriber notification behave
+    // identically.
+    clear: () => commit(EMPTY_ITEMS),
     isInCart: (productId) => items.some((i) => i.productId === productId),
     total: cartTotal(items),
     count: items.length,

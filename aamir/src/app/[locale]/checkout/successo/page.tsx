@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import { ClearCartOnMount } from "@/components/ClearCartOnMount";
 
 export default async function CheckoutSuccessPage({
   params,
@@ -12,6 +13,7 @@ export default async function CheckoutSuccessPage({
 
   return (
     <section className="mx-auto max-w-xl px-6 pt-24 pb-24 text-center">
+      <ClearCartOnMount />
       <h1 className="font-serif text-4xl mb-6">{t("successTitle")}</h1>
       <p className="text-[color:var(--color-text)]/80 mb-10">{t("successBody")}</p>
       <Link
